@@ -1,0 +1,5 @@
+<launch>
+    <rosparam file="$(find c1)/config/config.yaml" command="load" />
+    <node pkg="c1" type="node_publisher.py" name="node_publisher" launch-prefix="xterm -e" />
+    <node pkg="c1" type="node_subscriber.py" name="node_subscriber" launch-prefix="xterm -e" />
+</launch>

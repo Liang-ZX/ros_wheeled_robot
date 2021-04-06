@@ -1,0 +1,4 @@
+<launch>
+    <param name="test_param" type="str" value="this_is_a_string_value" />
+    <node pkg="c1" type="hello.py" name="hello_not_node" output="screen" />
+</launch>

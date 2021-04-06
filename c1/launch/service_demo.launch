@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="rqt_console" type="rqt_console" name="rqt_console" />
+    <node pkg="c1" type="srv_server.py" name="srv_server" launch-prefix="xterm -e" />
+    <!-- not work for server has not start yet -->
+    <!-- <node pkg="c1" type="srv_client.py" name="srv_client" args="123 246" launch-prefix="xterm -e"/> -->
+</launch>

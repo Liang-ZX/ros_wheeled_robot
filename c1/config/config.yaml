@@ -1,0 +1,3 @@
+test_param_server:
+    key_of_str : one_string_value
+    key_of_int : 12321
