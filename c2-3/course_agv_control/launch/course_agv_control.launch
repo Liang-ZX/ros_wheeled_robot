@@ -15,5 +15,8 @@
     <remap from="/joint_states" to="/course_agv/joint_states" />
   </node>
 
-  <!-- <node pkg="course_agv_control" type="keyboard_velocity.py" name="keyboard_terminal" output="screen" launch-prefix="xterm -e" /> -->
+  <!-- 
+  <node pkg="course_agv_control" type="keyboard_velocity.py" name="keyboard_terminal" output="screen" launch-prefix="xterm -e" />
+  <node pkg="course_agv_control" type="kinematics.py" name="kinematics" ns="course_agv" output="screen" launch-prefix="xterm -e" />
+   -->
 </launch>

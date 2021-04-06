@@ -12,6 +12,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from my_planner import Planner
 
+import time
+
 
 class GlobalPlanner:
     def __init__(self):
@@ -66,7 +68,10 @@ class GlobalPlanner:
 
         # self.planner.update_planner(self.map)
         # get result
+        start_t = time.clock()
         plan_rx, plan_ry = self.planner.planning(self.plan_sx, self.plan_sy, self.plan_gx, self.plan_gy)
+        end_t = time.clock()
+        print "It takes", end_t-start_t, "seconds to find the path."
         if plan_rx is not None:
             self.plan_rx = (np.array(plan_rx) * self.map.info.resolution + self.map.info.origin.position.x).tolist()
             self.plan_ry = (np.array(plan_ry) * self.map.info.resolution + self.map.info.origin.position.y).tolist()

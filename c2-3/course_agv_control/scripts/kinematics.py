@@ -2,45 +2,47 @@
 
 import rospy
 import geometry_msgs.msg
-import std_msgs.msg
+from std_msgs.msg import Float64
 
-class velocity_Publisher:
-    def __init__(self, side="left"):
-        topic_str = "/course_agv/" + side + "_wheel_velocity_controller/command"
-        self.vel_pub = rospy.Publisher(
-            topic_str, std_msgs.msg.Float64, queue_size=1)
-    def pub(self, velocity):
-        if rospy.is_shutdown():
-            exit()
-        # print("publish command : vx - %.2f vw - %.2f"%(command['vx'],command['vw']))
-        self.vel_pub.publish(velocity)
+class Kinematics:
+    left_wheel_vel = 0.0
+    right_wheel_vel = 0.0
+    def __init__(self):
+        self.receiver = rospy.Subscriber(
+            "/course_agv/velocity", geometry_msgs.msg.Twist,self.callback)
+        self.vel_left_pub = rospy.Publisher(
+            '/course_agv/left_wheel_velocity_controller/command',Float64, queue_size=10)
+        self.vel_right_pub = rospy.Publisher(
+            '/course_agv/right_wheel_velocity_controller/command',Float64, queue_size=10)
 
-def process(data, args):
-    vx = data.linear.x
-    vw = data.angular.z
-    l = 0.1133 # (0.2+0.08/3) / 2
-    vel_left = vx - vw * l / 2.0
-    vel_right = vx + vw * l / 2.0
-    print("subscribe command: left_vel - %.2f right_vel - %.2f"%(vel_left, vel_right))
-    publish_l = args[0]
-    publish_r = args[1]
-    publish_l.pub(vel_left)
-    publish_r.pub(vel_right)
+    def callback(self, data):
+        vx = data.linear.x
+        vw = data.angular.z
+        self.left_wheel_vel,self.right_wheel_vel = self.kinematics(vx,vw)
 
-def listener():
-    pub_left = velocity_Publisher(side="left")
-    pub_right = velocity_Publisher(side="right")
-    rospy.Subscriber('/course_agv/velocity', geometry_msgs.msg.Twist, 
-        process, (pub_left, pub_right))
+    def kinematics(self,vx,vw):
+        # too simple method , TODO
+        rx = 1.0 / 0.08
+        rw = (0.1+0.08/6)/0.08
+        return rx*vx-rw*vw,rx*vx+rw*vw
+
+    def publish(self):
+        self.vel_left_pub.publish(self.left_wheel_vel)
+        self.vel_right_pub.publish(self.right_wheel_vel)
 
 def main():
     node_name = "course_agv_kinematics"
     print("node : ",node_name)
-    rospy.init_node(node_name,anonymous=False)
-    listener()
-    rospy.spin()
-
+    try:
+        
+        rospy.init_node(node_name)
+        k = Kinematics()
+        rate = rospy.Rate(rospy.get_param('~publish_rate',200))
+        while not rospy.is_shutdown():
+            k.publish()
+            rate.sleep()
+    except rospy.ROSInterruptException:
+        pass
 
 if __name__ == '__main__':
     main()
-
