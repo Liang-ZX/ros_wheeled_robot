@@ -13,25 +13,22 @@ class Planner:
         self.grid_size = self.to_index(grid_size)
         self.robot_radius = self.to_index(robot_radius)
         self.offsets = [(1,0),(0,1),(-1,0),(0,-1),(1,1),(-1,1),(-1,-1),(1,-1)]
-        # self.obstacle_offsets = [(1,0),(0.707,0.707),(0,1),(-0.707,0.707),(-1,0),(-0.707,-0.707),(0,-1),(0.707,-0.707)]
-
+        self.obstacle_offsets = [(1,0),(0.707,0.707),(0,1),(-0.707,0.707),(-1,0),(-0.707,-0.707),(0,-1),(0.707,-0.707)]
+    
     def update_planner(self, input_map):
         self.map_data = np.array(input_map.data).reshape((-1, input_map.info.height)).transpose()
         self.map_info = input_map.info
         self.dilate_map = self.map_data.copy()
 
-    def planning(self, sx, sy, gx, gy, strategy = "Astar"):
+    def planning(self, sx, sy, gx, gy):
         sx = self.to_index(sx - self.map_info.origin.position.x)
         sy = self.to_index(sy - self.map_info.origin.position.y)
         gx = self.to_index(gx - self.map_info.origin.position.x)
         gy = self.to_index(gy - self.map_info.origin.position.y)
-        if strategy == "Astar":
-            self.rx, self.ry = self.A_star(sx, sy, gx, gy)
-        elif strategy == "bfs":
-            self.rx, self.ry = self.bfs(sx, sy, gx, gy)
-        else:
-            print "Warning: Unknown strategy."
-            self.rx, self.ry = None, None
+        
+        # self.rx, self.ry = self.A_star(sx, sy, gx, gy)
+        self.rx, self.ry = self.bfs(sx, sy, gx, gy)
+        
         if self.rx is not None:
             print(self.rx)
             print(self.ry)
@@ -63,17 +60,21 @@ class Planner:
                     flag = True
                     if self.dilate_map[now_x+dx, now_y+dy] > 50: # self.map_data[now_x+dx, now_y+dy] > 50:
                         flag = False
-                    else:
-                        for (robot_x, robot_y) in self.offsets:
-                            robot_x = int(np.ceil(self.robot_radius * robot_x))
-                            robot_y = int(np.ceil(self.robot_radius * robot_y))
-                            if self.map_data[now_x + dx+robot_x, now_y+dy+robot_y] > 50:
-                                self.dilate_map[now_x+dx, now_y+dy] = 100 #update map
-                                flag = False
+                    elif self.dilate_map[now_x+dx, now_y+dy] != -100:
+                        for scale in [1, 0.5]:
+                            for (robot_x, robot_y) in self.obstacle_offsets:
+                                robot_x = int(np.ceil(self.robot_radius * robot_x * scale))
+                                robot_y = int(np.ceil(self.robot_radius * robot_y * scale))
+                                if self.map_data[now_x + dx+robot_x, now_y+dy+robot_y] > 50:
+                                    self.dilate_map[now_x+dx, now_y+dy] = 100 #update map
+                                    flag = False
+                                    break
+                            if flag is False:
                                 break
-                    if not flag:
+                    if flag is False:
                         visit[now_x+dx, now_y+dy] = 1
                     else:
+                        self.dilate_map[now_x+dx, now_y+dy] = -100
                         if (now_x+dx, now_y+dy) in opendict:
                             (f_old, g_old) = opendict[(now_x+dx, now_y+dy)]
                             g_new = g + np.sqrt(dx**2+dy**2)
@@ -124,16 +125,19 @@ class Planner:
                     flag = True
                     if self.dilate_map[now_x+dx, now_y+dy] > 50:
                         flag = False
-                    else:
-                        # for scale in [1, 0.5]
-                        for (robot_x, robot_y) in self.offsets:
-                            robot_x = int(np.ceil(self.robot_radius * robot_x))
-                            robot_y = int(np.ceil(self.robot_radius * robot_y))
-                            if self.map_data[now_x + dx+robot_x, now_y+dy+robot_y] > 50:
-                                self.dilate_map[now_x+dx, now_y+dy] = 100 #update map
-                                flag = False
+                    elif self.dilate_map[now_x+dx, now_y+dy] != -100:
+                        for scale in [1, 0.5]:
+                            for (robot_x, robot_y) in self.obstacle_offsets:
+                                robot_x = int(np.ceil(self.robot_radius * robot_x * scale))
+                                robot_y = int(np.ceil(self.robot_radius * robot_y * scale))
+                                if self.map_data[now_x + dx+robot_x, now_y+dy+robot_y] > 50:
+                                    self.dilate_map[now_x+dx, now_y+dy] = 100 #update map
+                                    flag = False
+                                    break
+                            if flag is False:
                                 break
                     if flag:
+                        self.dilate_map[now_x+dx, now_y+dy] = -100
                         last[now_x+dx][now_y+dy] = (now_x, now_y)
                         q.put((now_x+dx, now_y+dy))
         if not found:
