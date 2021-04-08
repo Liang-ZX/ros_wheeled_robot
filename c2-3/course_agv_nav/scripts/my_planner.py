@@ -26,8 +26,8 @@ class Planner:
         gx = self.to_index(gx - self.map_info.origin.position.x)
         gy = self.to_index(gy - self.map_info.origin.position.y)
         
-        # self.rx, self.ry = self.A_star(sx, sy, gx, gy)
-        self.rx, self.ry = self.bfs(sx, sy, gx, gy)
+        self.rx, self.ry = self.A_star(sx, sy, gx, gy)
+        # self.rx, self.ry = self.bfs(sx, sy, gx, gy)
         
         if self.rx is not None:
             print(self.rx)
@@ -60,7 +60,7 @@ class Planner:
                     flag = True
                     if self.dilate_map[now_x+dx, now_y+dy] > 50: # self.map_data[now_x+dx, now_y+dy] > 50:
                         flag = False
-                    elif self.dilate_map[now_x+dx, now_y+dy] != -100:
+                    elif self.dilate_map[now_x+dx, now_y+dy] > -50:
                         for scale in [1, 0.5]:
                             for (robot_x, robot_y) in self.obstacle_offsets:
                                 robot_x = int(np.ceil(self.robot_radius * robot_x * scale))
@@ -125,7 +125,7 @@ class Planner:
                     flag = True
                     if self.dilate_map[now_x+dx, now_y+dy] > 50:
                         flag = False
-                    elif self.dilate_map[now_x+dx, now_y+dy] != -100:
+                    elif self.dilate_map[now_x+dx, now_y+dy] > -50:
                         for scale in [1, 0.5]:
                             for (robot_x, robot_y) in self.obstacle_offsets:
                                 robot_x = int(np.ceil(self.robot_radius * robot_x * scale))
