@@ -35,8 +35,7 @@ class GlobalPlanner:
         self.goal_sub = rospy.Subscriber('/course_agv/goal',PoseStamped,self.goalCallback)
         # self.plan_srv = rospy.Service('/course_agv/global_plan',Plan,self.replan)
         self.path_pub = rospy.Publisher('/course_agv/global_path',Path,queue_size = 1)
-        # self.map_sub = rospy.Subscriber('/slam_map',OccupancyGrid,self.mapCallback)
-        self.map_sub = rospy.Subscriber('/map',OccupancyGrid,self.mapCallback)
+        self.map_sub = rospy.Subscriber('/slam_map',OccupancyGrid,self.mapCallback)
         self.updateMap()
         self.initPlanner()
         # self.updateGlobalPose()
@@ -56,10 +55,8 @@ class GlobalPlanner:
 
     def updateGlobalPose(self):
         try:
-            # self.tf.waitForTransform("/map", "/robot_base", rospy.Time(), rospy.Duration(4.0))
-            # (self.trans,self.rot) = self.tf.lookupTransform('/map','/robot_base',rospy.Time(0))
-            self.tf.waitForTransform("/map", "/base_footprint", rospy.Time(), rospy.Duration(4.0))
-            (self.trans,self.rot) = self.tf.lookupTransform('/map','/base_footprint',rospy.Time(0))
+            self.tf.waitForTransform("/map", "/robot_base", rospy.Time(), rospy.Duration(4.0))
+            (self.trans,self.rot) = self.tf.lookupTransform('/map','/robot_base',rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print("get tf error!")
         self.plan_sx = self.trans[0]
