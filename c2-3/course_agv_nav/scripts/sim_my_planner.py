@@ -58,15 +58,14 @@ class Planner:
                 dy *= self.grid_size
                 if not visit[now_x+dx, now_y+dy]:
                     flag = True
-                    if self.dilate_map[now_x+dx, now_y+dy] != 0 and self.dilate_map[now_x+dx, now_y+dy] != -100: 
-                        # self.map_data[now_x+dx, now_y+dy] > 50:
+                    if self.dilate_map[now_x+dx, now_y+dy] > 50: # self.map_data[now_x+dx, now_y+dy] > 50:
                         flag = False
-                    elif self.dilate_map[now_x+dx, now_y+dy] != -100:
+                    elif self.dilate_map[now_x+dx, now_y+dy] > -50:
                         for scale in [1, 0.5]:
                             for (robot_x, robot_y) in self.obstacle_offsets:
                                 robot_x = int(np.ceil(self.robot_radius * robot_x * scale))
                                 robot_y = int(np.ceil(self.robot_radius * robot_y * scale))
-                                if self.map_data[now_x + dx+robot_x, now_y+dy+robot_y] != 0:
+                                if self.map_data[now_x + dx+robot_x, now_y+dy+robot_y] > 50:
                                     self.dilate_map[now_x+dx, now_y+dy] = 100 #update map
                                     flag = False
                                     break
@@ -124,14 +123,14 @@ class Planner:
                 if not visit[now_x+dx, now_y+dy]:
                     visit[now_x+dx, now_y+dy] = 1
                     flag = True
-                    if self.dilate_map[now_x+dx, now_y+dy] != 0 and self.dilate_map[now_x+dx, now_y+dy] != -100:
+                    if self.dilate_map[now_x+dx, now_y+dy] > 50:
                         flag = False
-                    elif self.dilate_map[now_x+dx, now_y+dy] != -100:
+                    elif self.dilate_map[now_x+dx, now_y+dy] > -50:
                         for scale in [1, 0.5]:
                             for (robot_x, robot_y) in self.obstacle_offsets:
                                 robot_x = int(np.ceil(self.robot_radius * robot_x * scale))
                                 robot_y = int(np.ceil(self.robot_radius * robot_y * scale))
-                                if self.map_data[now_x + dx+robot_x, now_y+dy+robot_y] != 0:
+                                if self.map_data[now_x + dx+robot_x, now_y+dy+robot_y] > 50:
                                     self.dilate_map[now_x+dx, now_y+dy] = 100 #update map
                                     flag = False
                                     break
