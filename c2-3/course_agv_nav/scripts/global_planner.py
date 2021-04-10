@@ -21,8 +21,8 @@ class GlobalPlanner:
         self.plan_sy = 0.0
         self.plan_gx = 8.0
         self.plan_gy = -8.0
-        self.plan_grid_size = 0.3
-        self.plan_robot_radius = 0.6
+        self.plan_grid_size = 0.2
+        self.plan_robot_radius = 0.71
         self.plan_ox = []
         self.plan_oy = []
         self.plan_rx = []
