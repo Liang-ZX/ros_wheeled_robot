@@ -3,11 +3,10 @@ import numpy as np
 
 class Config:
     def __init__(self):
-        self.max_speed = 0.8  # [m/s]
-        self.min_speed = -0.5  # [m/s]
+        self.max_speed = 1  # [m/s]
         self.max_yawrate = 100.0 * np.pi / 180.0  # [rad/s]
-        self.max_accel = 1  # [m/ss]
-        self.max_dyawrate = 100.0 * np.pi / 180.0  # [rad/ss]
+        self.max_accel = 0.5  # [m/s2]
+        self.max_dyawrate = 1  # [rad/s2]
         self.dt = 0.1  # [s] Time tick for motion prediction
         self.v_reso = self.max_accel*self.dt/10.0  # [m/s]
         self.yawrate_reso = self.max_dyawrate*self.dt/10.0  # [rad/s]
