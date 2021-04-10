@@ -8,6 +8,7 @@ import math
 from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, Twist
 from sensor_msgs.msg import LaserScan
+from nav_msgs.srv import GetMap
 
 from my_dwa import DWAPlanner
 
@@ -47,12 +48,12 @@ class LocalPlanner:
         self.path_sub = rospy.Subscriber('/course_agv/global_path', Path,
                                          self.pathCallback)
 
-        self.vel_pub = rospy.Publisher('/webService/cmd_vel',
-                                       Twist,
-                                       queue_size=1)
-        # self.vel_pub = rospy.Publisher('/course_agv/velocity',
+        # self.vel_pub = rospy.Publisher('/webService/cmd_vel',
         #                                Twist,
         #                                queue_size=1)
+        self.vel_pub = rospy.Publisher('/course_agv/velocity',
+                                       Twist,
+                                       queue_size=1)
 
         # mid_goal pub
         self.midpose_pub = rospy.Publisher('/course_agv/mid_goal',
@@ -67,6 +68,22 @@ class LocalPlanner:
         self.planner_thread = None
         self.listener = keyboard.Listener(on_press=self.on_press)
         # self.listener.start()
+        self.updateMap()
+
+    def updateMap(self):
+        rospy.wait_for_service('/static_map')
+        try:
+            getMap = rospy.ServiceProxy('/static_map',GetMap)
+            msg = getMap().map
+        except:
+            e = sys.exc_info()[0]
+            print('Service call failed: %s'%e)
+        # Update for planning algorithm
+        self.mapCallback(msg)
+
+    def mapCallback(self,msg):
+        self.map = msg
+        pass
 
     def on_press(self, key):
         
@@ -90,9 +107,9 @@ class LocalPlanner:
     # self.goal_dis  (distance from the final goal)
     def updateGlobalPose(self):
         try:
-            self.tf.waitForTransform("/map", "/base_footprint", rospy.Time(),
+            self.tf.waitForTransform("/map", "/robot_base", rospy.Time(),
                                      rospy.Duration(4.0))
-            (self.trans, self.rot) = self.tf.lookupTransform('/map', '/base_footprint', rospy.Time(0))
+            (self.trans, self.rot) = self.tf.lookupTransform('/map', '/robot_base', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException,
                 tf.ExtrapolationException):
             print("get tf error!")
@@ -113,8 +130,8 @@ class LocalPlanner:
             ind += 1
         goal = self.path.poses[self.goal_index]
         self.midpose_pub.publish(goal)
-        # lgoal = self.tf.transformPose("/base_footprint", goal)
-        lgoal = self.tf.transformPose("/base_footprint", goal)
+        # lgoal = self.tf.transformPose("/robot_base", goal)
+        lgoal = self.tf.transformPose("/robot_base", goal)
         self.plan_goal = np.array(
             [lgoal.pose.position.x, lgoal.pose.position.y])
         self.goal_dis = math.hypot(
@@ -139,10 +156,16 @@ class LocalPlanner:
 
     # update ob
     def updateObstacle(self):
-        self.laser_lock.acquire()
+        map_data = np.array(self.map.data).reshape((-1, self.map.info.height)).transpose()
+        ox,oy = np.nonzero(map_data > 50)
+        plan_ox = (ox*self.map.info.resolution+self.map.info.origin.position.x).tolist()
+        plan_oy = (oy*self.map.info.resolution+self.map.info.origin.position.y).tolist()
+        
+        self.ob = zip(plan_ox, plan_oy)
+        # self.laser_lock.acquire()
         self.plan_ob = []
         self.plan_ob = np.array(self.ob)
-        self.laser_lock.release()
+        # self.laser_lock.release()
 
     # get path & initPlaning
     def pathCallback(self, msg):

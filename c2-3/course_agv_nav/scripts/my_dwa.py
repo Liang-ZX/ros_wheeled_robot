@@ -4,7 +4,7 @@ import numpy as np
 class Config:
     def __init__(self):
         self.max_speed = 1  # [m/s]
-        self.max_yawrate = 100.0 * np.pi / 180.0  # [rad/s]
+        self.max_yawrate = 2.5  # [rad/s]
         self.max_accel = 0.5  # [m/s2]
         self.max_dyawrate = 1  # [rad/s2]
         self.dt = 0.1  # [s] Time tick for motion prediction
@@ -14,7 +14,7 @@ class Config:
         self.heading_cost_gain = 1.0
         self.velocity_cost_gain = 0.1
         self.dist_cost_gain = 4.0
-        self.robot_radius = 0.4  # [m] for collision check
+        self.robot_radius = 0.6 #0.37  # [m] for collision check
 
 
 class DWAPlanner:
@@ -28,7 +28,7 @@ class DWAPlanner:
         best_velocity, best_trajectory = self.dwa_plan()
         return best_velocity
 
-    def heading_cost(self, trajectory): # 朝向目标点
+    def heading_cost(self, trajectory):
         dx = self.goal[0] - trajectory[-1, 0]
         dy = self.goal[1] - trajectory[-1, 1]
         cost_angle = np.arctan2(dy, dx) - trajectory[-1, 2]
@@ -72,14 +72,14 @@ class DWAPlanner:
         x[2] += v[1] * dt
         x[3] = v[0]
         x[4] = v[1]
-        ########## 法2
+        ########## Method 2
         # r = v[0] * 1.0 / v[1]
         # next_theta = x[2] + v[1] * dt
         # x[0] = x[0] + r*np.sin(x[2]) - r * np.sin(next_theta)
         # x[1] = x[1] - r*np.cos(x[2]) + r * np.cos(next_theta)
         return x
     
-    def calc_trajectory(self, step_v, step_w): #计算一条模拟轨迹
+    def calc_trajectory(self, step_v, step_w): #calc sim trajectory
         x = np.array(self.now_pos)
         traj = np.array(self.now_pos)
         time = 0
@@ -90,7 +90,7 @@ class DWAPlanner:
         return traj
 
     def dwa_plan(self):
-        dw = self.velocity_dynamic_window(self.now_pos) # velocity window
+        dw = self.velocity_dynamic_window() # velocity window
         
         min_cost = float("inf")
         best_velocity = [0.0, 0.0]
