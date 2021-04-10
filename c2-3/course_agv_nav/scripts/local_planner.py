@@ -9,7 +9,7 @@ from nav_msgs.msg import Path
 from geometry_msgs.msg import PoseStamped, Twist
 from sensor_msgs.msg import LaserScan
 
-from dwa import DWAPlanner
+from my_dwa import DWAPlanner
 
 from threading import Lock, Thread
 from pynput import keyboard

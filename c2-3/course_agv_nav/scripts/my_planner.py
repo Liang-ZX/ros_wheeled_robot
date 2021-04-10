@@ -35,8 +35,8 @@ class Planner:
         return self.rx, self.ry
 
     def A_star(self, sx, sy, gx, gy):
-        visit = np.zeros((129,129)) # close list
-        last = [[None for i in range(129)] for j in range (129)]
+        visit = np.zeros((self.map_data.shape[0], self.map_data.shape[1]))
+        last = [[None for i in range(self.map_data.shape[1])] for j in range (self.map_data.shape[0])]
         found = False
         openlist = [[self.dist(sx, sy, gx, gy),0,(sx,sy)]]
         opendict = {(sx,sy): (self.dist(sx, sy, gx, gy),0)}
@@ -56,6 +56,8 @@ class Planner:
             for (dx, dy) in self.offsets:
                 dx *= self.grid_size
                 dy *= self.grid_size
+                if (now_x + dx) >= self.map_data.shape[0] or (now_y + dy) >= self.map_data.shape[1]:
+                    continue
                 if not visit[now_x+dx, now_y+dy]:
                     flag = True
                     if self.dilate_map[now_x+dx, now_y+dy] != 0 and self.dilate_map[now_x+dx, now_y+dy] != -100: 
@@ -66,6 +68,8 @@ class Planner:
                             for (robot_x, robot_y) in self.obstacle_offsets:
                                 robot_x = int(np.ceil(self.robot_radius * robot_x * scale))
                                 robot_y = int(np.ceil(self.robot_radius * robot_y * scale))
+                                if (now_x + dx + robot_x) >= self.map_data.shape[0] or (now_y +dy+robot_y)>=self.map_data.shape[1]:
+                                    continue
                                 if self.map_data[now_x + dx+robot_x, now_y+dy+robot_y] != 0:
                                     self.dilate_map[now_x+dx, now_y+dy] = 100 #update map
                                     flag = False
@@ -105,9 +109,9 @@ class Planner:
             return rx, ry                
 
     def bfs(self, sx, sy, gx, gy):
-        q = Queue(maxsize=129*129)
-        visit = np.zeros((129,129))
-        last = [[None for i in range(129)] for j in range (129)]
+        q = Queue(maxsize=self.map_data.shape[0] * self.map_data.shape[1])
+        visit = np.zeros((self.map_data.shape[0], self.map_data.shape[1]))
+        last = [[None for i in range(self.map_data.shape[1])] for j in range (self.map_data.shape[0])]
         found = False
         visit[sx, sy] = 1
         q.put((sx, sy))
@@ -121,6 +125,8 @@ class Planner:
             for (dx, dy) in self.offsets:
                 dx *= self.grid_size
                 dy *= self.grid_size
+                if (now_x + dx) >= self.map_data.shape[0] or (now_y + dy) >= self.map_data.shape[1]:
+                    continue
                 if not visit[now_x+dx, now_y+dy]:
                     visit[now_x+dx, now_y+dy] = 1
                     flag = True
@@ -131,6 +137,8 @@ class Planner:
                             for (robot_x, robot_y) in self.obstacle_offsets:
                                 robot_x = int(np.ceil(self.robot_radius * robot_x * scale))
                                 robot_y = int(np.ceil(self.robot_radius * robot_y * scale))
+                                if (now_x + dx + robot_x) >= self.map_data.shape[0] or (now_y +dy+robot_y)>=self.map_data.shape[1]:
+                                    continue
                                 if self.map_data[now_x + dx+robot_x, now_y+dy+robot_y] != 0:
                                     self.dilate_map[now_x+dx, now_y+dy] = 100 #update map
                                     flag = False

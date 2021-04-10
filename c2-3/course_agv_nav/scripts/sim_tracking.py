@@ -13,14 +13,14 @@ class Tracking:
         self.path = Path()
         self.tf = tf.TransformListener()
         self.path_sub = rospy.Subscriber('/course_agv/global_path',Path,self.pathCallback)
-        self.vel_pub = rospy.Publisher('/webService/cmd_vel',Twist, queue_size=1)
+        self.vel_pub = rospy.Publisher('/course_agv/velocity',Twist, queue_size=1)
         self.midpose_pub = rospy.Publisher('/course_agv/mid_goal',PoseStamped,queue_size=1)
         self.tracking_thread = None
         pass
     def updateGlobalPose(self):
         try:
-            self.tf.waitForTransform("/map", "/base_footprint", rospy.Time(), rospy.Duration(4.0))
-            (self.trans,self.rot) = self.tf.lookupTransform('/map','/base_footprint',rospy.Time(0))
+            self.tf.waitForTransform("/map", "/robot_base", rospy.Time(), rospy.Duration(4.0))
+            (self.trans,self.rot) = self.tf.lookupTransform('/map','/robot_base',rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print("get tf error!")
         euler = tf.transformations.euler_from_quaternion(self.rot)
