@@ -38,7 +38,7 @@ class LocalPlanner:
         # self.max_speed = 0.8  # [m/s]
         # self.predict_time = 2  # [s]
         # self.threshold = self.max_speed * self.predict_time
-        self.threshold = 1.5
+        self.threshold = 0.7
 
         self.laser_lock = Lock()
         self.lock = Lock()
@@ -157,7 +157,7 @@ class LocalPlanner:
     # update ob
     def updateObstacle(self):
         map_data = np.array(self.map.data).reshape((-1, self.map.info.height)).transpose()
-        ox,oy = np.nonzero(map_data > 50)
+        ox,oy = np.nonzero(map_data > 0)
         plan_ox = (ox*self.map.info.resolution+self.map.info.origin.position.x).tolist()
         plan_oy = (oy*self.map.info.resolution+self.map.info.origin.position.y).tolist()
         
@@ -208,7 +208,7 @@ class LocalPlanner:
                 print(self.goal_dis)
                 print(self.arrive)
                 break
-            time.sleep(0.001)
+            time.sleep(0.01)
         print("exit planning thread!!")
         self.lock.acquire()
         self.publishVel(True)

@@ -37,7 +37,7 @@ class LocalPlanner:
         # self.max_speed = 0.8  # [m/s]
         # self.predict_time = 2  # [s]
         # self.threshold = self.max_speed * self.predict_time
-        self.threshold = 1.5
+        self.threshold = 0.7
 
         self.laser_lock = Lock()
         self.lock = Lock()

@@ -8,7 +8,8 @@ class Config:
         self.max_accel = 0.5  # [m/s2]
         self.max_dyawrate = 1  # [rad/s2]
         self.dt = 0.1  # [s] Time tick for motion prediction
-        self.v_reso = self.max_accel*self.dt/10.0  # [m/s]
+        # self.v_reso = self.max_accel*self.dt/10.0  # [m/s]
+        self.v_reso = 0.02
         self.yawrate_reso = self.max_dyawrate*self.dt/10.0  # [rad/s]
         self.predict_time = 2  # [s]
         self.heading_cost_gain = 1.0
@@ -40,8 +41,10 @@ class DWAPlanner:
     def obstacle_cost(self, trajectory):
         ox = self.ob[:, 0]
         oy = self.ob[:, 1]
-        dx = trajectory[:, 0] - ox[:, None]
-        dy = trajectory[:, 1] - oy[:, None]
+        dx = ox
+        dy = oy
+        # dx = trajectory[:, 0] - ox[:, None]
+        # dy = trajectory[:, 1] - oy[:, None]
         r = np.hypot(dx, dy)        
         if (r <= self.config.robot_radius).any():
             return float("Inf")
