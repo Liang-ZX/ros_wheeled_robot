@@ -10,12 +10,14 @@ from geometry_msgs.msg import PoseStamped, Twist
 from sensor_msgs.msg import LaserScan
 from nav_msgs.srv import GetMap
 
-# from my_dwa import DWAPlanner
+from my_dwa import DWAPlanner
 from feedback_tracking import FB_Tracking
 
 from threading import Lock, Thread
 from pynput import keyboard
 import time
+
+import matplotlib.pyplot as plt
 
 
 def limitVal(minV, maxV, v):
@@ -35,13 +37,13 @@ class LocalPlanner:
         self.vx = 0.0
         self.vw = 0.0
         # init plan_config for once
-        # self.dwa = DWAPlanner()
-        self.fb = FB_Tracking()
+        self.dwa = DWAPlanner()
+        # self.fb = FB_Tracking()
         # self.max_speed = 0.8  # [m/s]
         # self.predict_time = 2  # [s]
         # self.threshold = self.max_speed * self.predict_time
         self.threshold = 1.5
-        self.path_threshold = 0.7
+        self.path_threshold = 1.5
 
         self.laser_lock = Lock()
         self.lock = Lock()
@@ -155,6 +157,7 @@ class LocalPlanner:
         # preprocess
         # print("i am here!")
         self.ob = [[100, 100]]
+        # self.ob = [[2.0, 2.0]]
         angle_min = msg.angle_min
         angle_increment = msg.angle_increment
         for i in range(len(msg.ranges)):
@@ -233,8 +236,8 @@ class LocalPlanner:
         self.plan_x = np.array([0.0, 0.0, 0.0, self.vx, self.vw])
         # Update obstacle
         self.updateObstacle()
-        # u = self.dwa.plan(self.plan_x, self.plan_goal, self.plan_ob)
-        u = self.fb.plan(self.plan_x, self.plan_goal)
+        u = self.dwa.plan(self.plan_x, self.plan_goal, self.plan_ob)
+        # u = self.fb.plan(self.plan_x, self.plan_goal)
         alpha = 0.5
         # self.vx = u[0] * alpha + self.vx * (1 - alpha)
         # self.vw = u[1] * alpha + self.vw * (1 - alpha)
