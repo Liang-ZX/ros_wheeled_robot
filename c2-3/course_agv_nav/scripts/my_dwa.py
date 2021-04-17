@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Config:
     def __init__(self):
@@ -18,6 +19,7 @@ class Config:
         self.dist_cost_gain = 2.0 # beta
         self.robot_radius = 0.3 #0.37  # [m] for collision check
         self.path_threshold = 0.7
+        self.laser_noise = 0.03
 
 
 class DWAPlanner:
@@ -27,7 +29,10 @@ class DWAPlanner:
     def plan(self, plan_x, plan_goal, plan_ob):
         self.now_pos = plan_x # [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
         self.goal = plan_goal
-        self.ob = plan_ob
+        # self.ob = plan_ob
+        self.ob = plan_ob[(abs(plan_ob[:,0])>self.config.laser_noise) | (abs(plan_ob[:,1])>self.config.laser_noise)]
+        # plt.scatter(self.ob[:,0], self.ob[:,1])
+        # plt.show()
         best_velocity, best_trajectory = self.dwa_plan()
         return best_velocity
 

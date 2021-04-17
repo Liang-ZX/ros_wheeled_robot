@@ -17,8 +17,6 @@ from threading import Lock, Thread
 from pynput import keyboard
 import time
 
-import matplotlib.pyplot as plt
-
 
 def limitVal(minV, maxV, v):
     if v < minV:
