@@ -10,7 +10,8 @@ from geometry_msgs.msg import PoseStamped, Twist
 from sensor_msgs.msg import LaserScan
 from nav_msgs.srv import GetMap
 
-from my_dwa import DWAPlanner
+# from my_dwa import DWAPlanner
+from feedback_tracking import FB_Tracking
 
 from threading import Lock, Thread
 from pynput import keyboard
@@ -34,11 +35,13 @@ class LocalPlanner:
         self.vx = 0.0
         self.vw = 0.0
         # init plan_config for once
-        self.dwa = DWAPlanner()
+        # self.dwa = DWAPlanner()
+        self.fb = FB_Tracking()
         # self.max_speed = 0.8  # [m/s]
         # self.predict_time = 2  # [s]
         # self.threshold = self.max_speed * self.predict_time
-        self.threshold = 0.7
+        self.threshold = 1.5
+        self.path_threshold = 0.7
 
         self.laser_lock = Lock()
         self.lock = Lock()
@@ -63,7 +66,7 @@ class LocalPlanner:
         # get laser & update obstacle
         # self.laser_sub = rospy.Subscriber('/scan_emma_nav_front', LaserScan,
         #                                   self.laserCallback)
-        self.laser_sub = rospy.Subscriber('/scan', LaserScan,
+        self.laser_sub = rospy.Subscriber('/course_agv/laser/scan', LaserScan,
                                           self.laserCallback)
         self.planner_thread = None
         self.listener = keyboard.Listener(on_press=self.on_press)
@@ -119,15 +122,22 @@ class LocalPlanner:
         self.y = self.trans[1]
         self.yaw = yaw
         # get nearest path node
-        ind = self.goal_index
-        self.goal_index = len(self.path.poses) - 1
-        while ind < len(self.path.poses):
-            p = self.path.poses[ind].pose.position
-            dis = math.hypot(p.x - self.x, p.y - self.y)
-            # print('mdgb;; ',len(self.path.poses),ind,dis)
-            if dis < self.threshold:
-                self.goal_index = ind
-            ind += 1
+
+        p = self.path.poses[self.goal_index].pose.position
+        dis = math.hypot(p.x-self.x,p.y-self.y)
+        if dis < self.path_threshold and self.goal_index < len(self.path.poses)-1:
+            self.goal_index = self.goal_index + 1
+
+        # ind = self.goal_index
+        # self.goal_index = len(self.path.poses) - 1
+        # while ind < len(self.path.poses):
+        #     p = self.path.poses[ind].pose.position
+        #     dis = math.hypot(p.x - self.x, p.y - self.y)
+        #     # print('mdgb;; ',len(self.path.poses),ind,dis)
+        #     if dis < self.path_threshold:
+        #         self.goal_index = ind
+        #     ind += 1
+
         goal = self.path.poses[self.goal_index]
         self.midpose_pub.publish(goal)
         # lgoal = self.tf.transformPose("/robot_base", goal)
@@ -156,16 +166,16 @@ class LocalPlanner:
 
     # update ob
     def updateObstacle(self):
-        map_data = np.array(self.map.data).reshape((-1, self.map.info.height)).transpose()
-        ox,oy = np.nonzero(map_data > 0)
-        plan_ox = (ox*self.map.info.resolution+self.map.info.origin.position.x).tolist()
-        plan_oy = (oy*self.map.info.resolution+self.map.info.origin.position.y).tolist()
+        # map_data = np.array(self.map.data).reshape((-1, self.map.info.height)).transpose()
+        # ox,oy = np.nonzero(map_data > 0)
+        # plan_ox = (ox*self.map.info.resolution+self.map.info.origin.position.x).tolist()
+        # plan_oy = (oy*self.map.info.resolution+self.map.info.origin.position.y).tolist()
         
-        self.ob = zip(plan_ox, plan_oy)
-        # self.laser_lock.acquire()
+        # self.ob = zip(plan_ox, plan_oy)
+        self.laser_lock.acquire()
         self.plan_ob = []
         self.plan_ob = np.array(self.ob)
-        # self.laser_lock.release()
+        self.laser_lock.release()
 
     # get path & initPlaning
     def pathCallback(self, msg):
@@ -223,7 +233,8 @@ class LocalPlanner:
         self.plan_x = np.array([0.0, 0.0, 0.0, self.vx, self.vw])
         # Update obstacle
         self.updateObstacle()
-        u = self.dwa.plan(self.plan_x, self.plan_goal, self.plan_ob)
+        # u = self.dwa.plan(self.plan_x, self.plan_goal, self.plan_ob)
+        u = self.fb.plan(self.plan_x, self.plan_goal)
         alpha = 0.5
         # self.vx = u[0] * alpha + self.vx * (1 - alpha)
         # self.vw = u[1] * alpha + self.vw * (1 - alpha)
