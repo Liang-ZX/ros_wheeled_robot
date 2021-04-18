@@ -8,10 +8,11 @@ class FB_Tracking:
         self.max_speed = 1.0
         self.k2 = 3
         self.k1 = 1
+        self.path_threshold = 0.7
 
-    def plan(self, plan_x, plan_goal):
-        self.now_pos = plan_x # [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
-        self.goal = plan_goal # [x(m), y(m)]
+    def plan(self, *args):
+        self.now_pos = args[0] # [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
+        self.goal = args[1] # [x(m), y(m)]
 
         theta = np.arctan2(self.goal[1] - self.now_pos[1], self.goal[0] - self.now_pos[0])
 

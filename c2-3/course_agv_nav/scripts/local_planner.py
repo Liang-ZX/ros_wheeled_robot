@@ -34,13 +34,14 @@ class LocalPlanner:
         self.vx = 0.0
         self.vw = 0.0
         # init plan_config for once
-        self.dwa = DWAPlanner()
-        # self.fb = FB_Tracking()
+        self.planner = DWAPlanner()
+        # self.planner = FB_Tracking()
+
         # self.max_speed = 0.8  # [m/s]
         # self.predict_time = 2  # [s]
         # self.threshold = self.max_speed * self.predict_time
         self.threshold = 1.5
-        self.path_threshold = 1.5
+        self.path_threshold = self.planner.path_threshold
 
         self.laser_lock = Lock()
         self.lock = Lock()
@@ -209,8 +210,7 @@ class LocalPlanner:
         self.plan_x = np.array([0.0, 0.0, 0.0, self.vx, self.vw])
         # Update obstacle
         self.updateObstacle()
-        u = self.dwa.plan(self.plan_x, self.plan_goal, self.plan_ob)
-        # u = self.fb.plan(self.plan_x, self.plan_goal)
+        u = self.planner.plan(self.plan_x, self.plan_goal, self.plan_ob)
         alpha = 0.5
         # self.vx = u[0] * alpha + self.vx * (1 - alpha)
         # self.vw = u[1] * alpha + self.vw * (1 - alpha)

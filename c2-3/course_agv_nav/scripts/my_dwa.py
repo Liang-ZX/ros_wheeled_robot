@@ -14,22 +14,23 @@ class Config:
         # self.v_reso = 0.02
         self.yawrate_reso = self.max_dyawrate*self.dt/5.0  # [rad/s]
         self.predict_time = 4  # [s]
-        self.heading_cost_gain = 3.0 # alpha
-        self.velocity_cost_gain = 0.1 # gamma
-        self.dist_cost_gain = 2.0 # beta
+        self.alpha = 0.6 # heading
+        self.beta = 0.6 # dist
+        self.gamma = 2 # velocity
         self.robot_radius = 0.3 #0.37  # [m] for collision check
-        self.path_threshold = 0.7
         self.laser_noise = 0.03
 
 
 class DWAPlanner:
     def __init__(self):
         self.config = Config()
+        self.cnt = 5
+        self.path_threshold = 2.0
 
-    def plan(self, plan_x, plan_goal, plan_ob):
-        self.now_pos = plan_x # [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
-        self.goal = plan_goal
-        # self.ob = plan_ob
+    def plan(self, *args):
+        self.now_pos = args[0] # [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
+        self.goal = args[1]
+        plan_ob = args[2]
         self.ob = plan_ob[(abs(plan_ob[:,0])>self.config.laser_noise) | (abs(plan_ob[:,1])>self.config.laser_noise)]
         # plt.scatter(self.ob[:,0], self.ob[:,1])
         # plt.show()
@@ -41,7 +42,7 @@ class DWAPlanner:
         dy = self.goal[1] - trajectory[-1, 1]
         cost_angle = np.arctan2(dy, dx) - trajectory[-1, 2]
         cost = abs(np.arctan2(np.sin(cost_angle), np.cos(cost_angle))) / (2*np.pi) + \
-            np.sqrt(dx**2 + dy**2) / self.config.path_threshold
+            np.sqrt(dx**2 + dy**2) / 0.7 # attention
         return cost
 
     def velocity_cost(self, trajectory):
@@ -50,12 +51,13 @@ class DWAPlanner:
     def obstacle_cost(self, trajectory):
         ox = self.ob[:, 0]
         oy = self.ob[:, 1]
-        dx = trajectory[:, 0] - ox[:, None]
-        dy = trajectory[:, 1] - oy[:, None]
+        dx = trajectory[5::10, 0] - ox[:, None]
+        dy = trajectory[5::10, 1] - oy[:, None]
         r = np.hypot(dx, dy)        
         if (r <= self.config.robot_radius).any():
             return float("Inf")
-        min_r = np.min(r)
+        min_r = np.min(r, axis=0) # each column
+        min_r = np.average(min_r)
         if min_r > 3 * self.config.robot_radius:
             min_r = 3 * self.config.robot_radius
         return 1.0 / min_r
@@ -114,15 +116,23 @@ class DWAPlanner:
 
                 trajectory = self.calc_trajectory(step_v, step_w)
                 # calc cost
-                heading = self.config.heading_cost_gain * self.heading_cost(trajectory)
-                velocity = self.config.velocity_cost_gain * self.velocity_cost(trajectory)
-                dist = self.config.dist_cost_gain * self.obstacle_cost(trajectory)
+                heading = self.heading_cost(trajectory)
+                velocity = self.velocity_cost(trajectory)
+                dist = self.obstacle_cost(trajectory)
 
-                final_cost = heading + velocity + dist
+                final_cost = self.config.alpha * heading + self.config.beta * dist + self.config.gamma * velocity
 
                 if final_cost < min_cost:
                     min_cost = final_cost
                     best_velocity = [step_v, step_w]
                     best_trajectory = trajectory
+                    self.cnt = 5
 
+        if min_cost == float("inf"):
+            if(self.cnt > 0):
+                self.cnt = self.cnt - 1
+            else:
+                print("No feasible Solution")
+                best_velocity = [self.config.min_speed/5, 0.0]
+                self.cnt = 1
         return best_velocity, best_trajectory
