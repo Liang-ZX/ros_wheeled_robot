@@ -1,6 +1,9 @@
 #!/usr/bin/env python2
 import numpy as np
 import matplotlib.pyplot as plt
+import math
+import time
+theta = -1
 
 class Config:
     def __init__(self):
@@ -13,20 +16,19 @@ class Config:
         self.v_reso = self.max_accel*self.dt/5.0  # [m/s]
         # self.v_reso = 0.02
         self.yawrate_reso = self.max_dyawrate*self.dt/5.0  # [rad/s]
-        self.predict_time = 6  # [s]
-        self.alpha = 0.8 # heading
+        self.predict_time = 4  # [s]
+        self.alpha = 0.7 # heading
         self.beta = 0.6 # dist
-        self.gamma =  3# velocity
+        self.gamma = 1.5 # velocity
         self.robot_radius = 0.35 #0.37  # [m] for collision check
         self.laser_noise = 0.03
-        self.max_cnt = 3
 
 
 class DWAPlanner:
     def __init__(self):
         self.config = Config()
-        self.cnt = self.config.max_cnt
-        self.path_threshold = 1.5
+        self.cnt = 2
+        self.path_threshold = 1.8
 
     def plan(self, *args):
         self.now_pos = args[0] # [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
@@ -43,18 +45,26 @@ class DWAPlanner:
         dy = self.goal[1] - trajectory[-1, 1]
         cost_angle = np.arctan2(dy, dx) - trajectory[-1, 2]
         cost = abs(np.arctan2(np.sin(cost_angle), np.cos(cost_angle))) / (2*np.pi) + \
-            np.sqrt(dx**2 + dy**2) / 0.5 # attention
+            np.sqrt(dx**2 + dy**2) / 0.7 # attention
         return cost
 
     def velocity_cost(self, trajectory):
-        return (self.config.max_speed - abs(trajectory[-1, 3]))*1.5 + (self.config.max_yawrate - abs(trajectory[-1, 4]))/self.config.max_yawrate
+        return self.config.max_speed - abs(trajectory[-1, 3])*1.5 + (self.config.max_yawrate - abs(trajectory[-1, 4]))/self.config.max_yawrate
 
     def obstacle_cost(self, trajectory):
         ox = self.ob[:, 0]
         oy = self.ob[:, 1]
+        # plt.scatter(oy[1:],ox[1:])
+        # plt.show()
         dx = trajectory[5::10, 0] - ox[:, None]
         dy = trajectory[5::10, 1] - oy[:, None]
         r = np.hypot(dx, dy)        
+        index_ox, index_tra = np.where(r == np.min(r))
+        global theta
+        # theta = np.arctan2(oy[index_ox], ox[index_ox])
+        # theta = np.mean(theta)
+        theta = np.mean(oy[index_ox])
+        print('my theta:',theta)
         if (r <= self.config.robot_radius).any():
             return float("Inf")
         min_r = np.min(r, axis=0) # each column
@@ -129,7 +139,7 @@ class DWAPlanner:
                     best_velocity = [step_v, step_w]
                     best_cost = [heading, velocity, dist]
                     best_trajectory = trajectory
-                    self.cnt = min(self.cnt+1, self.config.max_cnt)
+                    self.cnt = min(self.cnt+1, 2)
         # print(best_velocity)
         # print(best_cost)
 
@@ -140,6 +150,11 @@ class DWAPlanner:
             else:
                 print("No feasible Solution")
                 # best_velocity = [-0.1, 0.0]
-                best_velocity = [0.0, 0.3]
-                # self.cnt = 1
+                global theta
+                if theta  <= 0:
+                    best_velocity = [0.0, -0.3]
+                else:
+                    best_velocity = [0.0, 0.3]
+                # time.sleep(1)
+                self.cnt = 1
         return best_velocity, best_trajectory

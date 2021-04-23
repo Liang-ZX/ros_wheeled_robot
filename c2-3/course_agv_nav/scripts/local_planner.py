@@ -34,8 +34,8 @@ class LocalPlanner:
         self.vx = 0.0
         self.vw = 0.0
         # init plan_config for once
-        # self.planner = DWAPlanner()
-        self.planner = FB_Tracking()
+        self.planner = DWAPlanner()
+        # self.planner = FB_Tracking()
 
         # self.max_speed = 0.8  # [m/s]
         # self.predict_time = 2  # [s]

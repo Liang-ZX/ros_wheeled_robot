@@ -17,6 +17,7 @@ import time
 
 class GlobalPlanner:
     def __init__(self):
+        print("I'm here")
         self.plan_sx = 0.0
         self.plan_sy = 0.0
         self.plan_gx = 8.0
@@ -31,6 +32,7 @@ class GlobalPlanner:
         # count to update map
         self.map_count = 0
 
+        # self.initPlanner()
         self.tf = tf.TransformListener()
         self.goal_sub = rospy.Subscriber('/course_agv/goal',PoseStamped,self.goalCallback)
         # self.plan_srv = rospy.Service('/course_agv/global_plan',Plan,self.replan)
@@ -39,11 +41,13 @@ class GlobalPlanner:
         self.map_sub = rospy.Subscriber('/map',OccupancyGrid,self.mapCallback)
         self.updateMap()
         self.initPlanner()
+        # self.goal_sub = rospy.Subscriber('/course_agv/goal',PoseStamped,self.goalCallback)
         # self.updateGlobalPose()
         print("global planner init well")
         pass
 
     def goalCallback(self,msg):
+        self.initPlanner()
         self.plan_goal = msg
         self.plan_gx = msg.pose.position.x
         self.plan_gy = msg.pose.position.y
