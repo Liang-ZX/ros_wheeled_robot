@@ -4,19 +4,19 @@ import matplotlib.pyplot as plt
 
 class Config:
     def __init__(self):
-        self.min_speed = 0
-        self.max_speed = 1  # [m/s]
-        self.max_yawrate = 3 #2.5  # [rad/s]
+        self.min_speed = 0.0
+        self.max_speed = 1.0  # [m/s]
+        self.max_yawrate = 3.0 #2.5  # [rad/s]
         self.max_accel = 0.5  # [m/s2]
         self.max_dyawrate = 2#1  # [rad/s2]
         self.dt = 0.1  # [s] Time tick for motion prediction
         self.v_reso = self.max_accel*self.dt/5.0  # [m/s]
         # self.v_reso = 0.02
         self.yawrate_reso = self.max_dyawrate*self.dt/5.0  # [rad/s]
-        self.predict_time = 6  # [s]
-        self.alpha = 0.8 # heading
-        self.beta = 0.6 # dist
-        self.gamma =  3# velocity
+        self.predict_time = 4  # [s]
+        self.alpha = 0.6 # heading 0.6
+        self.beta = 1.8 # dist
+        self.gamma = 4.5 # velocity 2
         self.robot_radius = 0.35 #0.37  # [m] for collision check
         self.laser_noise = 0.03
         self.max_cnt = 3
@@ -26,7 +26,7 @@ class DWAPlanner:
     def __init__(self):
         self.config = Config()
         self.cnt = self.config.max_cnt
-        self.path_threshold = 1.5
+        self.path_threshold = 1.5 #2.0
 
     def plan(self, *args):
         self.now_pos = args[0] # [x(m), y(m), yaw(rad), v(m/s), omega(rad/s)]
@@ -43,17 +43,17 @@ class DWAPlanner:
         dy = self.goal[1] - trajectory[-1, 1]
         cost_angle = np.arctan2(dy, dx) - trajectory[-1, 2]
         cost = abs(np.arctan2(np.sin(cost_angle), np.cos(cost_angle))) / (2*np.pi) + \
-            np.sqrt(dx**2 + dy**2) / 0.5 # attention
+            np.sqrt(dx**2 + dy**2) / 0.5 # attention 0.7
         return cost
 
     def velocity_cost(self, trajectory):
-        return (self.config.max_speed - abs(trajectory[-1, 3]))*1.5 + (self.config.max_yawrate - abs(trajectory[-1, 4]))/self.config.max_yawrate
+        return self.config.max_speed - abs(trajectory[-1, 3])
 
     def obstacle_cost(self, trajectory):
         ox = self.ob[:, 0]
         oy = self.ob[:, 1]
-        dx = trajectory[5::10, 0] - ox[:, None]
-        dy = trajectory[5::10, 1] - oy[:, None]
+        dx = trajectory[15::10, 0] - ox[:, None]
+        dy = trajectory[15::10, 1] - oy[:, None]
         r = np.hypot(dx, dy)        
         if (r <= self.config.robot_radius).any():
             return float("Inf")
@@ -108,15 +108,16 @@ class DWAPlanner:
         dw = self.velocity_dynamic_window() # velocity window
         
         min_cost = float("inf")
-        best_velocity = [0.0, 0.0]
+        best_velocity = [0.0, 0.2]
         best_trajectory = np.array([self.now_pos])
-        best_cost = [-1,-1,-1]
-
+        # best_cost = [-1,-1,-1]
+        # plt.clf()
         # evaluate all trajectory with sampled input in dynamic window
         for step_v in np.arange(dw[0], dw[1], self.config.v_reso):
             for step_w in np.arange(dw[2], dw[3], self.config.yawrate_reso):
 
                 trajectory = self.calc_trajectory(step_v, step_w)
+                # plt.plot(trajectory[:,0], trajectory[:,1])
                 # calc cost
                 heading = self.heading_cost(trajectory)
                 velocity = self.velocity_cost(trajectory)
@@ -127,19 +128,21 @@ class DWAPlanner:
                 if final_cost < min_cost:
                     min_cost = final_cost
                     best_velocity = [step_v, step_w]
-                    best_cost = [heading, velocity, dist]
+                    # best_cost = [heading, velocity, dist]
                     best_trajectory = trajectory
                     self.cnt = min(self.cnt+1, self.config.max_cnt)
         # print(best_velocity)
         # print(best_cost)
+        if best_velocity[0] < 1e-5 and best_velocity[1] < 1e-5:
+            best_velocity = [0.0, 0.2]
 
         if min_cost == float("inf"):
+            # plt.show()
             # print(heading, dist, velocity, self.cnt)
             if(self.cnt > 0):
                 self.cnt = self.cnt - 1
             else:
                 print("No feasible Solution")
-                # best_velocity = [-0.1, 0.0]
-                best_velocity = [0.0, 0.3]
-                # self.cnt = 1
+                best_velocity = [0.0, 0.2]
+                self.cnt = 1
         return best_velocity, best_trajectory

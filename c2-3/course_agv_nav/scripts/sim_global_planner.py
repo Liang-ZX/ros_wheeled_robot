@@ -30,7 +30,7 @@ class GlobalPlanner:
 
         # count to update map
         self.map_count = 0
-
+        self.initFlag = False
         self.tf = tf.TransformListener()
         self.goal_sub = rospy.Subscriber('/course_agv/goal',PoseStamped,self.goalCallback)
         # self.plan_srv = rospy.Service('/course_agv/global_plan',Plan,self.replan)
@@ -43,6 +43,7 @@ class GlobalPlanner:
         pass
 
     def goalCallback(self,msg):
+        self.initPlanner()
         self.plan_goal = msg
         self.plan_gx = msg.pose.position.x
         self.plan_gy = msg.pose.position.y
@@ -81,11 +82,14 @@ class GlobalPlanner:
             # return PlanResponse(res)
 
     def initPlanner(self):
+        if self.initFlag:
+            return
         map_data = np.array(self.map.data).reshape((-1,self.map.info.height)).transpose()
         # ox,oy = np.nonzero(map_data > 50)
         # self.plan_ox = (ox*self.map.info.resolution+self.map.info.origin.position.x).tolist()
         # self.plan_oy = (oy*self.map.info.resolution+self.map.info.origin.position.y).tolist()
         self.planner = Planner(map_data, self.map.info, self.plan_grid_size, self.plan_robot_radius)
+        self.initFlag = True
 
     def mapCallback(self,msg):
         self.map = msg
