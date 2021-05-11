@@ -33,7 +33,8 @@ class DWAPlanner:
         self.goal = args[1]
         plan_ob = args[2]
         self.ob = plan_ob[(abs(plan_ob[:,0])>self.config.laser_noise) | (abs(plan_ob[:,1])>self.config.laser_noise)]
-        # plt.scatter(self.ob[:,0], self.ob[:,1])
+        # plt.clf()
+        # plt.scatter(self.ob[1:,0], self.ob[1:,1])
         # plt.show()
         best_velocity, best_trajectory = self.dwa_plan()
         return best_velocity
@@ -125,6 +126,9 @@ class DWAPlanner:
 
                 final_cost = self.config.alpha * heading + self.config.beta * dist + self.config.gamma * velocity
 
+                # if not (final_cost==float("inf")):
+                #     plt.plot(trajectory[:,0], trajectory[:,1])
+
                 if final_cost < min_cost:
                     min_cost = final_cost
                     best_velocity = [step_v, step_w]
@@ -135,6 +139,7 @@ class DWAPlanner:
         # print(best_cost)
         if best_velocity[0] < 1e-5 and best_velocity[1] < 1e-5:
             best_velocity = [0.0, 0.2]
+            # plt.show()
 
         if min_cost == float("inf"):
             # plt.show()
