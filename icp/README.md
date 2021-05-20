@@ -25,3 +25,7 @@
 5. rosbag运行
 
    > rosbag play xxx.bag
+
+6. EKF
+
+   > roslaunch course_agv_icp  localization.launch
