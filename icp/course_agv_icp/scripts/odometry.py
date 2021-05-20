@@ -74,11 +74,14 @@ class MyOdom:
 
     # transform the ros msg to numpy matrix
     def laserToNumpy(self,msg):
-        total_num = len(msg.ranges)
-        pc = np.ones([3,total_num])
         range_l = np.array(msg.ranges)
+        range_l = range_l[~ np.isnan(range_l)]
+        # mask = np.sort(np.random.choice(range_l.shape[0], min(300, range_l.shape[0]), replace=False))
+        # range_l = range_l[mask]
+        total_num = range_l.shape[0]
+        pc = np.ones([3,total_num])
         angle_l = np.linspace(msg.angle_min,msg.angle_max,total_num)
-        points = np.vstack((np.multiply(np.cos(angle_l),range_l),np.multiply(np.sin(angle_l),np.arange(total_num))))
+        # points = np.vstack((np.multiply(np.cos(angle_l),range_l),np.multiply(np.sin(angle_l),np.arange(total_num))))
         pc[0:2,:] = np.vstack((np.multiply(np.cos(angle_l),range_l),np.multiply(np.sin(angle_l),range_l)))
         return pc
     
