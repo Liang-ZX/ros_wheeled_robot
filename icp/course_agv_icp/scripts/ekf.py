@@ -30,13 +30,8 @@ class EKF():
         xPred = self.odom_model(xEst, u)
         Jfx, _ = self.jacob_motion(xEst, u)
         PPred = (Jfx.dot(PEst)).dot(Jfx.T) + Qx
-        # zPred = self.observ_model(xPred, z)
-        # jH = np.eye(2)
-        # y = np.array(z).T - zPred
         y = z
         S = Qy
-        print(xPred)
-        print(y)
         xEst = np.linalg.inv(PPred**2 + S**2).dot((S**2).dot(xPred) + (PPred**2).dot(y))
         PEst = (np.linalg.inv(PPred**2 + S**2)).dot(PPred**2).dot(S**2)
         return xEst, PEst
@@ -47,15 +42,20 @@ class EKF():
         # Predict
         S = STATE_SIZE
         # motion model: odom_model
-        xEst[0:S] = self.odom_model(xEst[0:S], u)
+        xPred = self.odom_model(xEst[0:S], u)
         # uncertainty propagation: jacob_motion
         Jfx, Jfn = self.jacob_motion(xEst, u)
-        PEst = (Jfx.dot(PEst)).dot(Jfx.T) + (Jfn.dot(Qx)).dot(Jfn.T)
-        # Update for each observation
-        for iz in range(z.shape[0]):
-            pass
-        nLM = self.calc_lm_number(xEst)
-
+        PPred = (Jfx.dot(PEst)).dot(Jfx.T) + (Jfn.dot(Qx)).dot(Jfn.T)
+        zPred = xPred  # self.observ_model(xPred)
+        Jh = np.eye(3)
+        y = np.array(z).T - zPred
+        Z = Jh.dot(PPred).dot(Jh.T) + Qy  # Innovation
+        K = PPred.dot(Jh.T).dot(np.linalg.inv(Z))  # Kalman gain
+        xEst = xPred + K.dot(y)
+        PEst = PEst - K.dot(Z).dot(K.T)
+        # # Update for each observation
+        # for iz in range(z.shape[0]):
+        #     pass
         return xEst, PEst
 
     # input: posteriori estimated state at timestamp k, system input u
@@ -63,7 +63,7 @@ class EKF():
     def odom_model(self, x, u):
         """
             x = [x,y,w]T
-            u = [ox,oy,ow]T
+            u = [dx,dy,dw]T
         """
         x[0,0] = x[0,0] + np.cos(x[2,0])*u[0,0] - np.sin(x[2,0])*u[1,0]
         x[1,0] = x[1,0] + np.sin(x[2,0])*u[0,0] + np.cos(x[2,0])*u[1,0]
