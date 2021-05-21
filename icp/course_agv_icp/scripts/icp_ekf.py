@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 import rospy
 import tf
 import math
@@ -11,7 +11,7 @@ import numpy as np
 import cv2
 from icp import ICP
 from ekf import EKF,STATE_SIZE
-from extraction import Extraction
+# from extraction import Extraction
 
 MAX_LASER_RANGE = 30
 
@@ -24,7 +24,8 @@ class SLAM_EKF():
 
         self.icp = ICP()
         self.ekf = EKF()
-        self.extraction = Extraction()
+        # self.extraction = Extraction()
+        self.tf = tf.TransformListener()
 
         # odom robot init states
         self.sensor_sta = [self.robot_x,self.robot_y,self.robot_theta]
@@ -46,20 +47,48 @@ class SLAM_EKF():
         self.odom_broadcaster = tf.TransformBroadcaster()
         self.landMark_pub = rospy.Publisher('/landMarks',MarkerArray,queue_size=1)
 
+    def updateGlobalPose(self):
+        try:
+            self.tf.waitForTransform("/map", "/laser", rospy.Time(), rospy.Duration(4.0))
+            (trans, rot1) = self.tf.lookupTransform('/map', '/laser', rospy.Time(0))
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            print("get tf error!")
+        euler1 = tf.transformations.euler_from_quaternion(rot1)
+        _, _, yaw1 = euler1[0], euler1[1], euler1[2]
+
+        # try:
+        #     self.tf.waitForTransform("/map", "/world_base", rospy.Time(), rospy.Duration(4.0))
+        #     (trans2, rot2) = self.tf.lookupTransform('/map', '/world_base', rospy.Time(0))
+        # except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+        #     print("get tf error!")
+        # euler2 = tf.transformations.euler_from_quaternion(rot2)
+        # _, _, yaw2 = euler2[0], euler2[1], euler2[2]
+
+        # print(trans1[0], trans2[0])
+        # trans = np.array(trans1) + np.array(trans2)
+        self.x = trans[0]
+        self.y = trans[1]
+        self.yaw = yaw1 #+ yaw2
+        return np.array([[self.x, self.y, self.yaw]]).T
+
     def laserCallback(self,msg):
         np_msg = self.laserToNumpy(msg)
-        lm = self.extraction.process(np_msg)
+        # lm = self.extraction.process(np_msg)  # [3, n]
         u = self.calc_odometry(np_msg)
-        z = self.match(lm)
-        self.xEst,self.PEst = self.ekf.estimate(self.xEst,self.PEst,z,u)
+        # z = self.match(lm)
+        z = self.updateGlobalPose()
+        self.xEst,self.PEst = self.ekf.fusion(self.xEst,self.PEst,z,u)
 
         self.publishResult()
         pass
 
     def mapCallback(self,msg):
-        # self.map = np.array(msg.data).reshape(msg.info.height, msg.info.width).astype(np.uint8)
+        self.map = np.array(msg.data).reshape(msg.info.height, msg.info.width).astype(np.uint8)
 
         # lines = cv2.Canny(self.map,50,150,apertureSize = 3)
+        pass
+
+    def match(self, lm):
         pass
 
     def observation(self,lm):
@@ -85,9 +114,12 @@ class SLAM_EKF():
         return self.T2u(transform_acc)
 
     def laserToNumpy(self,msg):
-        total_num = len(msg.ranges)
-        pc = np.ones([3,total_num])
         range_l = np.array(msg.ranges)
+        range_l = range_l[~ np.isnan(range_l)]
+        # mask = np.sort(np.random.choice(range_l.shape[0], min(300, range_l.shape[0]), replace=False))
+        # range_l = range_l[mask]
+        total_num = range_l.shape[0]
+        pc = np.ones([3,total_num])
         range_l[range_l == np.inf] = MAX_LASER_RANGE
         angle_l = np.linspace(msg.angle_min,msg.angle_max,total_num)
         pc[0:2,:] = np.vstack((np.multiply(np.cos(angle_l),range_l),np.multiply(np.sin(angle_l),range_l)))
@@ -124,11 +156,11 @@ class SLAM_EKF():
         s = self.xEst.reshape(-1)
         q = tf.transformations.quaternion_from_euler(0,0,s[2])
         self.odom_broadcaster.sendTransform((s[0],s[1],0.001),(q[0],q[1],q[2],q[3]),
-                            rospy.Time.now(),"ekf_location","world_base")
+                            rospy.Time.now(),"ekf_location","map") #TODO
         # odom
         odom = Odometry()
         odom.header.stamp = rospy.Time.now()
-        odom.header.frame_id = "world_base"
+        odom.header.frame_id = "map" #TODO
 
         odom.pose.pose.position.x = s[0]
         odom.pose.pose.position.y = s[1]
@@ -145,7 +177,7 @@ class SLAM_EKF():
         # odom
         odom = Odometry()
         odom.header.stamp = rospy.Time.now()
-        odom.header.frame_id = "world_base"
+        odom.header.frame_id = "map" #TODO
 
         odom.pose.pose.position.x = s[0]
         odom.pose.pose.position.y = s[1]
