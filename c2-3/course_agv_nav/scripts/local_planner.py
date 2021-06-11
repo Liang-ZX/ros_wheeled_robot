@@ -94,9 +94,9 @@ class LocalPlanner:
     # self.goal_dis  (distance from the final goal)
     def updateGlobalPose(self):
         try:
-            self.tf.waitForTransform("/map", "/base_footprint", rospy.Time(),
+            self.tf.waitForTransform("/map", "/ekf_location", rospy.Time(),
                                      rospy.Duration(4.0))
-            (self.trans, self.rot) = self.tf.lookupTransform('/map', '/base_footprint', rospy.Time(0))
+            (self.trans, self.rot) = self.tf.lookupTransform('/map', '/ekf_location', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException,
                 tf.ExtrapolationException):
             print("get tf error!")
@@ -123,8 +123,8 @@ class LocalPlanner:
 
         goal = self.path.poses[self.goal_index]
         self.midpose_pub.publish(goal)
-        # lgoal = self.tf.transformPose("/base_footprint", goal)
-        lgoal = self.tf.transformPose("/base_footprint", goal)
+        # lgoal = self.tf.transformPose("/ekf_location", goal)
+        lgoal = self.tf.transformPose("/ekf_location", goal)
         self.plan_goal = np.array(
             [lgoal.pose.position.x, lgoal.pose.position.y])
         self.goal_dis = math.hypot(

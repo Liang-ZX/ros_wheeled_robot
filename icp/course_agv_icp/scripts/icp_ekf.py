@@ -50,19 +50,19 @@ class SLAM_EKF():
     def updateGlobalPose(self):
         try:
             self.tf.waitForTransform("/map", "/laser", rospy.Time(), rospy.Duration(4.0))
-            (trans1, rot1) = self.tf.lookupTransform('/map', '/laser', rospy.Time(0))
-            self.tf.waitForTransform("/world_base", "/map", rospy.Time(), rospy.Duration(4.0))
-            (trans2, rot2) = self.tf.lookupTransform('/world_base', '/map', rospy.Time(0))
+            (trans, rot1) = self.tf.lookupTransform('/map', '/laser', rospy.Time(0))
+            # self.tf.waitForTransform("/world_base", "/map", rospy.Time(), rospy.Duration(4.0))
+            # (trans2, rot2) = self.tf.lookupTransform('/world_base', '/map', rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print("get tf error!")
-        # euler1 = tf.transformations.euler_from_quaternion(rot1)
-        # _, _, yaw = euler1[0], euler1[1], euler1[2]
-        matrix1 = np.array(tf.transformations.quaternion_matrix(rot1))
-        matrix2 = np.array(tf.transformations.quaternion_matrix(rot2))
-        matrix_ = matrix2.dot(matrix1)
-        trans = matrix2[:3,:3].dot(np.array(trans1).reshape(3,1)) + np.array(trans2).reshape(3,1)
-        euler = tf.transformations.euler_from_matrix(matrix_, axes='sxyz')
-        _, _, yaw = euler[0], euler[1], euler[2]
+        euler1 = tf.transformations.euler_from_quaternion(rot1)
+        _, _, yaw = euler1[0], euler1[1], euler1[2]
+        # matrix1 = np.array(tf.transformations.quaternion_matrix(rot1))
+        # matrix2 = np.array(tf.transformations.quaternion_matrix(rot2))
+        # matrix_ = matrix2.dot(matrix1)
+        # trans = matrix2[:3,:3].dot(np.array(trans1).reshape(3,1)) + np.array(trans2).reshape(3,1)
+        # euler = tf.transformations.euler_from_matrix(matrix_, axes='sxyz')
+        # _, _, yaw = euler[0], euler[1], euler[2]
 
         self.x = trans[0,0]
         self.y = trans[1,0]
@@ -154,11 +154,11 @@ class SLAM_EKF():
         s = self.xEst.reshape(-1)
         q = tf.transformations.quaternion_from_euler(0,0,s[2])
         self.odom_broadcaster.sendTransform((s[0],s[1],0.001),(q[0],q[1],q[2],q[3]),
-                            rospy.Time.now(),"ekf_location","world_base") #TODO
+                            rospy.Time.now(),"ekf_location","map") #TODO
         # odom
         odom = Odometry()
         odom.header.stamp = rospy.Time.now()
-        odom.header.frame_id = "world_base" #TODO
+        odom.header.frame_id = "map" #TODO
 
         odom.pose.pose.position.x = s[0]
         odom.pose.pose.position.y = s[1]
@@ -175,7 +175,7 @@ class SLAM_EKF():
         # odom
         odom = Odometry()
         odom.header.stamp = rospy.Time.now()
-        odom.header.frame_id = "world_base" #TODO
+        odom.header.frame_id = "map" #TODO
 
         odom.pose.pose.position.x = s[0]
         odom.pose.pose.position.y = s[1]

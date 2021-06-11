@@ -59,8 +59,8 @@ class GlobalPlanner:
         try:
             # self.tf.waitForTransform("/map", "/robot_base", rospy.Time(), rospy.Duration(4.0))
             # (self.trans,self.rot) = self.tf.lookupTransform('/map','/robot_base',rospy.Time(0))
-            self.tf.waitForTransform("/map", "/base_footprint", rospy.Time(), rospy.Duration(4.0))
-            (self.trans,self.rot) = self.tf.lookupTransform('/map','/base_footprint',rospy.Time(0))
+            self.tf.waitForTransform("/map", "/ekf_location", rospy.Time(), rospy.Duration(4.0))
+            (self.trans,self.rot) = self.tf.lookupTransform('/map','/ekf_location',rospy.Time(0))
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             print("get tf error!")
         self.plan_sx = self.trans[0]
