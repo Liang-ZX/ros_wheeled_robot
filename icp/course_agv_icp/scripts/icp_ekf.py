@@ -64,8 +64,8 @@ class SLAM_EKF():
         # euler = tf.transformations.euler_from_matrix(matrix_, axes='sxyz')
         # _, _, yaw = euler[0], euler[1], euler[2]
 
-        self.x = trans[0,0]
-        self.y = trans[1,0]
+        self.x = trans[0]  # trans[0,0]
+        self.y = trans[1]  # trans[1,0]
         self.yaw = yaw
         return np.array([[self.x, self.y, self.yaw]]).T
 

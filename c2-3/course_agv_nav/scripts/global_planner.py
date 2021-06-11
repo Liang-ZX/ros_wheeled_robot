@@ -49,6 +49,7 @@ class GlobalPlanner:
         self.plan_gx = msg.pose.position.x
         self.plan_gy = msg.pose.position.y
         # print("get new goal!!! ",self.plan_goal)
+        print("I'm here")
         self.replan()
         pass
 
@@ -72,10 +73,12 @@ class GlobalPlanner:
 
         # self.planner.update_planner(self.map)
         # get result
-        start_t = time.clock()
+        print("begin plan")
+        # start_t = time.clock()
         plan_rx, plan_ry = self.planner.planning(self.plan_sx, self.plan_sy, self.plan_gx, self.plan_gy)
-        end_t = time.clock()
-        print "It takes", end_t-start_t, "seconds to find the path."
+        # end_t = time.clock()
+        # print ("It takes", end_t-start_t, "seconds to find the path.")
+        print("plan well")
         if plan_rx is not None:
             self.plan_rx = (np.array(plan_rx) * self.map.info.resolution + self.map.info.origin.position.x).tolist()
             self.plan_ry = (np.array(plan_ry) * self.map.info.resolution + self.map.info.origin.position.y).tolist()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 
 Path tracking simulation with pure pursuit steering and PID speed control.

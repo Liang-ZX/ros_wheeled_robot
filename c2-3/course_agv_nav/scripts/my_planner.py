@@ -27,8 +27,8 @@ class Planner:
         gx = self.to_index(gx - self.map_info.origin.position.x)
         gy = self.to_index(gy - self.map_info.origin.position.y)
         
-        # self.rx, self.ry = self.A_star(sx, sy, gx, gy)
-        self.rx, self.ry = self.bfs(sx, sy, gx, gy)
+        self.rx, self.ry = self.A_star(sx, sy, gx, gy)
+        # self.rx, self.ry = self.bfs(sx, sy, gx, gy)
         
         if self.rx is not None:
             print(self.rx)
