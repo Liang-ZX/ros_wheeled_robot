@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 import rospy
 import tf
 import math
@@ -49,7 +49,7 @@ class SLAM_ICP():
         self.obstacle_r = 10
 
         # ros topic
-        self.laser_sub = rospy.Subscriber('scan',LaserScan,self.laserCallback)
+        self.laser_sub = rospy.Subscriber('/scan',LaserScan,self.laserCallback)
         self.odom_pub = rospy.Publisher('icp_odom',Odometry,queue_size=3)
         self.location_pub = rospy.Publisher('icp_location',Odometry,queue_size=3)
         self.odom_broadcaster = tf.TransformBroadcaster()

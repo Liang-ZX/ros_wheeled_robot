@@ -4,6 +4,10 @@
         <param name="map_width" value="25.0"/>
         <param name="map_height" value="25.0"/>
         <param name="map_resolution" value="0.1"/>
+
+        <param name="robot_x" value="0"/>
+        <param name="robot_y" value="0"/>
+        <param name="robot_theta" value="0"/>
 	</node>
 
         <node pkg="course_agv_slam" type="tf" name="my_tf"/>
