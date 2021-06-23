@@ -1,0 +1,12 @@
+<launch>
+
+	<node pkg="course_agv_slam" type="slam_icp.py" name="slam" output="screen" >
+        <param name="map_width" value="25.0"/>
+        <param name="map_height" value="25.0"/>
+        <param name="map_resolution" value="0.1"/>
+	</node>
+
+        <node pkg="course_agv_slam" type="tf" name="my_tf"/>
+
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find course_agv_slam)/launch/course_agv.rviz" />
+</launch>
