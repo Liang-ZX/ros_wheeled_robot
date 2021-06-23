@@ -22,9 +22,9 @@ class SLAM_ICP():
         self.robot_y = rospy.get_param('/slam/robot_y',0)
         self.robot_theta = rospy.get_param('/slam/robot_theta',0)
         ## ros param of mapping
-        self.map_x_width = rospy.get_param('/slam/map_width')
-        self.map_y_width = rospy.get_param('/slam/map_height')
-        self.map_reso = rospy.get_param('/slam/map_resolution')
+        self.map_x_width = rospy.get_param('/slam/map_width', 25)
+        self.map_y_width = rospy.get_param('/slam/map_height', 25)
+        self.map_reso = rospy.get_param('/slam/map_resolution', 0.1)
         self.map_cellx_width = int(round(self.map_x_width/self.map_reso))
         self.map_celly_width = int(round(self.map_y_width/self.map_reso))
 
@@ -76,12 +76,20 @@ class SLAM_ICP():
             return np.eye(STATE_SIZE)
         self.src_pc = np_msg
         transform_acc = self.icp.process(self.tar_pc,self.src_pc)
-        return transform_acc
+        self.tar_pc = self.src_pc
+
+        robot_T = np.eye(STATE_SIZE)
+        robot_T[0,2] = self.xEst[0,2] + self.xEst[0,0]*transform_acc[0,2] + self.xEst[0,1]*transform_acc[1,2]
+        robot_T[1,2] = self.xEst[1,2] + self.xEst[1,0]*transform_acc[0,2] + self.xEst[1,1]*transform_acc[1,2]
+        robot_T[:2,:2] = np.dot(transform_acc[:2,:2], self.xEst[:2,:2])
+        return robot_T
 
     def laserToNumpy(self,msg):
-        total_num = len(msg.ranges)
-        pc = np.ones([3,total_num])
         range_l = np.array(msg.ranges)
+        range_l = range_l[~ np.isnan(range_l)]
+        
+        total_num = range_l.shape[0]
+        pc = np.ones([3,total_num])
         range_l[range_l == np.inf] = MAX_LASER_RANGE
         angle_l = np.linspace(msg.angle_min,msg.angle_max,total_num)
         pc[0:2,:] = np.vstack((np.multiply(np.cos(angle_l),range_l),np.multiply(np.sin(angle_l),range_l)))

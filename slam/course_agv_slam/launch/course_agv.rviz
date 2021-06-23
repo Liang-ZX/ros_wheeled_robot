@@ -152,7 +152,7 @@ Visualization Manager:
           Scale: 1
           Value: true
         Value: true
-      Enabled: false
+      Enabled: true
       Keep: 10
       Name: Odometry
       Position Tolerance: 0.10000000149011612
@@ -166,9 +166,9 @@ Visualization Manager:
         Shaft Length: 1
         Shaft Radius: 0.009999999776482582
         Value: Arrow
-      Topic: /icp_odom
+      Topic: /icp_location
       Unreliable: false
-      Value: false
+      Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /landMarks

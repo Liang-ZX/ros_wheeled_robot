@@ -23,7 +23,7 @@ class ICP:
         self.min_match = rospy.get_param('/icp/min_match',2)
     
     # ICP process function
-    # return: T = (R, t), where T is 2*3, R is 2*2 and t is 2*1
+    # return: T = (R, t), where T is 3*3, R is 2*2 and t is 2*1
     def process(self,tar_pc,src_pc):
         # tar_pc: last_time [3,n], src_pc: this_time [3,n]
         Transform_acc = np.eye(3)
@@ -43,7 +43,7 @@ class ICP:
             prev_error = mean_error
             iter_cnt = iter_cnt + 1
         print("total_iter: {:d}".format(iter_cnt))
-        return Transform_acc[:2,:]
+        return Transform_acc
 
     # find the nearest points & filter
     # return: neighbors of src and tar
