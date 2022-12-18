@@ -12,7 +12,7 @@ ROS Official Doc: [ROS](http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguri
 git clone https://github.com/Liang-ZX/ros_wheeled_robot.git
 
 mkdir catkin_ws
-ln -s ros_wheeled_robot catkin_ws/src
+ln -s ros_wheeled_robot/c2-3 catkin_ws/src
 
 # build source
 catkin build
