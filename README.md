@@ -13,6 +13,7 @@ git clone https://github.com/Liang-ZX/ros_wheeled_robot.git
 
 mkdir catkin_ws
 ln -s ros_wheeled_robot/c2-3 catkin_ws/src
+cd catkin_ws
 
 # build source
 catkin build
