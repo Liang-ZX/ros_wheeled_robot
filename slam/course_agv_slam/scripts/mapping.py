@@ -11,7 +11,7 @@ class Mapping():
         self.xyreso = xyreso
         self.xw = xw
         self.yw = yw
-        self.pmap = np.ones((self.xw, self.yw))*0.5 # default 0.5 -- [[0.5 for i in range(yw)] for i in range(xw)] 
+        self.pmap = np.ones((self.xw, self.yw))*0.3 # default 0.5 -- [[0.5 for i in range(yw)] for i in range(xw)] 
         self.pmap[0,:] = 1
         self.pmap[-1,:] = 1
         self.pmap[:,-1] = 1
