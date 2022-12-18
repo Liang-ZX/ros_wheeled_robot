@@ -1,6 +1,6 @@
 # ROS-wheeled-robot
 
-Author: Zhixuan Liang, Fanghao Wang, Zhenze Jiang
+Author: Zhixuan Liang
 
 Tutorial: [Tutorial](document/)
 
